@@ -10,10 +10,12 @@ ModelTypes = Union[Type[Users], Type[Quiz_Data], Type[Transactions]]
 
 
 def get_user_info(db: Session, user_id: int):
+    """Возвразает информацию по пользователю по его user_id"""
     return db.query(Users).filter(Users.user_id == user_id).first()
 
 
 def add_user_to_db(db: Session, user_id: int):
+    """Добавляет Telegram id пользователя в базу"""
     new_entry = Users(user_id=user_id)
     db.add(new_entry)
     db.commit()
@@ -87,6 +89,7 @@ def debit_user_balance(db: Session, user_id: int, admin_id: int, amount: int):
 
 
 def set_user_name(db: Session, user_id: int, user_name: str):
+    """Добавляет имя пользователя, указанное в викторине с привязкой к индитификатору"""
     user = db.query(Users).filter(Users.user_id == user_id).first()
     if user is None:
         return HTTPException(status_code=404, detail='User not found')
@@ -97,6 +100,7 @@ def set_user_name(db: Session, user_id: int, user_name: str):
 
 
 def set_account_name(db: Session, user_id: int, account_name: str):
+    """Добавляет имя пользователя Телеграм в привязке к индитификатору"""
     user = db.query(Users).filter(Users.user_id == user_id).first()
     if user is None:
         return HTTPException(status_code=404, detail='User not found')
@@ -107,6 +111,7 @@ def set_account_name(db: Session, user_id: int, account_name: str):
 
 
 def add_admin(db: Session, user_id: int, admin_id: int):
+    """Добавляет запись в базу с 'админскими' правами"""
     admin = db.query(Users).filter(Users.user_id == admin_id).first()
     if admin is None or not admin.is_admin:
         return HTTPException(status_code=403, detail='Only admin users are allowed to do this.')
@@ -121,6 +126,7 @@ def add_admin(db: Session, user_id: int, admin_id: int):
 
 
 def set_user_position(db: Session, user_id: int, position: int):
+    """Устанавливает текущую позицию пользователя в квесте"""
     user = db.query(Users).filter(Users.user_id == user_id).first()
     if user is None:
         return HTTPException(status_code=404, detail='User not found')
@@ -131,7 +137,45 @@ def set_user_position(db: Session, user_id: int, position: int):
 
 
 def get_user_position(db: Session, user_id: int):
+    """Возвращает текущую позицию пользователя в квесте"""
     user = db.query(Users).filter(Users.user_id == user_id).first()
     if user is None:
         return HTTPException(status_code=404, detail='User not found')
     return user.quest_num
+
+
+def show_users(db: Session):
+    """Возвращает содержимое таблицы User"""
+    users = db.query(Users).all()
+    if users is None:
+        return HTTPException(status_code=404, detail='No data to display.')
+    return users
+
+
+def show_user_ids_by_account(db: Session, account_name: str):
+    """Возвращает все user_id соответствующие нику в Телеграм"""
+    users = db.query(Users).filter(Users.account_name == account_name).all()
+    if users is None:
+        return HTTPException(status_code=404, detail=f'Account name: {account_name} - not found.')
+    return users.user_id
+
+
+def show_user_ids_by_quiz_name(db: Session, quiz_name: str):
+    """Возвращает все user_id соответствующие выбранному имени в викторине"""
+    users = db.query(Users).filter(Users.quiz_name == quiz_name).all()
+    if users is None:
+        return HTTPException(status_code=404, detail=f'Quiz name: {quiz_name} - not found.')
+    return users.user_id
+
+
+def user_delete(db: Session, user_id: int):
+    """Удаление пользователя по user_id"""
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    if user is None:
+        return HTTPException(status_code=404, detail=f'User id: {user_id} - not found.')
+    db.delete(user)
+    db.commit()
+    users = db.query(Users).all()
+    if users is None or len(users) < 1:
+        return HTTPException(status_code=204, detail=f'Users table is empty.')
+    return users

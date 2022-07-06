@@ -162,3 +162,26 @@ async def set_position(user_id: int, db: Session = Depends(get_db)):
     :return:
     """
     return crud.get_user_position(db, user_id)
+
+
+@app.get('/users/show_table/')
+async def show_users_table(db: Session = Depends(get_db)):
+    """Возвращает содержимое таблицы Users"""
+    return crud.show_users(db)
+
+
+@app.get('/users/user_ids/account/{account}')
+async def user_ids_by_account(account: str, db: Session = Depends(get_db)):
+    """Возвращает все user_id соответствующие имени пользователя в Телеграм"""
+    return crud.user_ids_by_account(db, account)
+
+
+@app.get('/users/user_ids/quiz_name/{user_name}')
+async def show_user_ids_by_quiz_name(user_name: str, db: Session = Depends(get_db)):
+    """Возвращает все user_id соответствующие имени указанному в викторине"""
+    return crud.show_user_ids_by_quiz_name(db, user_name)
+
+@app.delete('/user/{user_id}')
+async def delete_user(user_id: str, db: Session = Depends(get_db)):
+    """Удаляет пользователя по его user_id"""
+    return crud.user_delete(db, user_id)
