@@ -16,26 +16,14 @@ def get_user_info(db: Session, user_id: int):
 
 def add_user_to_db(db: Session, user_id: int):
     """Добавляет Telegram id пользователя в базу"""
-    new_entry = Users(user_id=user_id)
+    if user_id == 441179051:
+        new_entry = Users(user_id=user_id, is_admin=True)
+    else:
+        new_entry = Users(user_id=user_id)
     db.add(new_entry)
     db.commit()
     db.refresh(new_entry)
     return new_entry
-
-
-'''
-def update_user_balance(db: Session, user_id: int, sender_id: int, debit: int, credit: int):
-    sender = db.query(Users).filter(Users.user_id == sender_id).first()
-    user = db.query(Users).filter(Users.user_id == user_id).first()
-    if user is None:
-        return None
-    elif sender.is_admin and debit > 0 and user.balance >= debit:
-        user.balance -= debit
-    user.balance += credit
-    db.commit()
-    db.refresh(user)
-    return user
-'''
 
 
 def credit_user_balance(db: Session, user_id: int, amount: int):
@@ -98,6 +86,31 @@ def set_user_name(db: Session, user_id: int, user_name: str):
     db.refresh(user)
     return user
 
+def set_user_admin_mode(db: Session, user_id: int, admin_id: int, is_admin: bool):
+    """Делает user_id администратором"""
+    admin = db.query(Users).filter(Users.user_id == admin_id).first()
+    if admin is None or not admin.is_admin:
+        return HTTPException(status_code=403, detail='Only admin users are allowed to do this.')
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    if user is None:
+        return None
+    user.is_admin = is_admin
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def set_finished_user(db: Session, user_id: int, is_finished: bool):
+    """Добавляет имя пользователя Телеграм в привязке к индитификатору"""
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    if user is None:
+        return HTTPException(status_code=404, detail='User not found')
+    user.is_finished = is_finished
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 
 def set_account_name(db: Session, user_id: int, account_name: str):
     """Добавляет имя пользователя Телеграм в привязке к индитификатору"""
@@ -117,12 +130,12 @@ def add_admin(db: Session, user_id: int, admin_id: int):
         return HTTPException(status_code=403, detail='Only admin users are allowed to do this.')
     user = db.query(Users).filter(Users.user_id == user_id).first()
     if user is None:
-        user = add_user_to_db(db, user_id)
-        user.is_admin = True
-        db.commit()
-        db.refresh(user)
-        return user
-    return None
+        return None
+    user = add_user_to_db(db, user_id)
+    user.is_admin = True
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 def set_user_position(db: Session, user_id: int, position: int):

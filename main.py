@@ -141,6 +141,18 @@ async def add_admin(user_id: int, admin_id: int, db: Session = Depends(get_db)):
     return crud.add_admin(db, user_id, admin_id)
 
 
+@app.put("/admin/set/{user_id}/{admin_id}/{is_admin}")
+async def add_admin(user_id: int, admin_id: int, is_admin: bool, db: Session = Depends(get_db)):
+    """
+    Добавляет пользователя с правами администратора
+    :param user_id:
+    :param admin_id:
+    :param db:
+    :return:
+    """
+    return crud.set_user_admin_mode(db, user_id, admin_id, is_admin)
+
+
 @app.put("/user/position/{user_id}/{position}")
 async def set_position(user_id: int, position: int, db: Session = Depends(get_db)):
     """
@@ -181,7 +193,12 @@ async def show_user_ids_by_quiz_name(user_name: str, db: Session = Depends(get_d
     """Возвращает все user_id соответствующие имени указанному в викторине"""
     return crud.show_user_ids_by_quiz_name(db, user_name)
 
+
 @app.delete('/user/{user_id}')
 async def delete_user(user_id: str, db: Session = Depends(get_db)):
     """Удаляет пользователя по его user_id"""
     return crud.user_delete(db, user_id)
+
+@app.put('/user/finished/{user_id}')
+async def finish_user(user_id: str, db: Session = Depends(get_db)):
+    return crud.set_finished_user(db, user_id, True)
